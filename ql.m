@@ -1870,7 +1870,7 @@ reloading (=Shift+Enter in this block).
 Except for this level, nothing should be changed by the user.*)
 
 (*printproofstepslevel = 5;*)
-(*Diesen Befehl auskommentieren, wenn er im Rahmen der nb-Datei wirksam sein soll.*)
+(*Uncomment this command if it should take effect within the nb file.*)
 
 (*The following printproofstepslevels are available:
 1. prints input, start of a new iteration and output of decide.
