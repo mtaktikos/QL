@@ -9,9 +9,30 @@ BeginPackage["Timm`"]
 
 tradi::usage = "tradi[x] prints an expression x with quantors ein and alle in TraditionalForm"
 untradi::usage = "untradi[x] converts a traditional expression in input form"
+SetParallelization::usage = "SetParallelization[True|False] enables or disables parallel processing"
+GetParallelization::usage = "GetParallelization[] returns the current parallelization setting"
 
 
 (* Begin["`Private`"] *)
+
+(* PARALLELIZATION CONFIGURATION *)
+(* Default: parallel processing enabled if Parallel` functionality is available *)
+$ParallelizationEnabled = True;
+
+SetParallelization[enabled_] := ($ParallelizationEnabled = enabled);
+GetParallelization[] := $ParallelizationEnabled;
+
+(* Initialize parallel kernels if parallelization is enabled *)
+If[$ParallelizationEnabled && Length[Kernels[]] == 0,
+  LaunchKernels[];
+  If[Length[Kernels[]] > 0,
+    Print["Parallel processing enabled with ", Length[Kernels[]], " kernels"];
+    (* Distribute definitions to parallel kernels *)
+    DistributeDefinitions["Timm`*"];,
+    Print["Warning: Parallel processing requested but no kernels available"];
+    $ParallelizationEnabled = False;
+  ]
+];
 
 
 
@@ -74,16 +95,30 @@ alle[{lv_}, sat] := sat;
 "True".*)
 
 satDisjunktion[ausdruck_] :=
-  Module[{erg, lae, dd, ohnegeschweifte},
+  Module[{erg, lae, dd, ohnegeschweifte, ddList},
    erg = BooleanMinimize[ausdruck, "DNF"];
    ZPrint["Optimized DNF (1st step of evaluating sat): ", tradi[erg]][
     4]; 
    If[Head[erg] =!= Or, erg = satExpression[erg], lae = Length[erg];
-    Do[dd[ii] = satExpression[erg[[ii]]];
-     dd[ii] = dd[ii] //. {False} -> False;
-     dd[ii] = dd[ii] //. {sat} -> sat;
-     If[dd[ii] === sat, erg = sat; Break[]], {ii, 1, lae}];
-    If[erg =!= sat, erg = Apply[Or, Table[dd[ii], {ii, 1, lae}]]]];
+    (* Parallel evaluation of disjuncts when parallelization is enabled *)
+    If[$ParallelizationEnabled && lae > 1,
+      (* Use ParallelTable to evaluate disjuncts in parallel *)
+      ddList = ParallelTable[
+        Module[{result},
+          result = satExpression[erg[[ii]]];
+          result = result //. {False} -> False;
+          result = result //. {sat} -> sat;
+          result
+        ], {ii, 1, lae}];
+      (* Check if any disjunct is sat *)
+      If[MemberQ[ddList, sat], erg = sat, 
+        erg = Apply[Or, ddList]],
+      (* Sequential evaluation when parallelization is disabled *)
+      Do[dd[ii] = satExpression[erg[[ii]]];
+       dd[ii] = dd[ii] //. {False} -> False;
+       dd[ii] = dd[ii] //. {sat} -> sat;
+       If[dd[ii] === sat, erg = sat; Break[]], {ii, 1, lae}];
+      If[erg =!= sat, erg = Apply[Or, Table[dd[ii], {ii, 1, lae}]]]]];
    ZPrint["result of satDisjunktion: ", tradi[erg]][4];
    erg];
 (*"satDisjunktion" identifies a disjunction (with 1 or more \
@@ -224,13 +259,31 @@ identical arguments or at least one of the two \
 argument positions must have an x-variable. We assume \
 maxIndizierung in this module.*)
 kparts[posList_ , negList_] :=
-  Module[{akt1, akt2, erg},
-   erg = {};
-   Do[akt1 = posList[[ii]];
-    Do[akt2 = negList[[jj]]; 
-     If[kconditionQ[akt1, akt2], 
-      erg = Append[erg, {akt1, akt2}]] , {jj, 1, 
-      Length[negList]}], {ii, 1, Length[posList]}]; 
+  Module[{akt1, akt2, erg, posLen, negLen},
+   posLen = Length[posList];
+   negLen = Length[negList];
+   (* Parallel evaluation when parallelization is enabled and sufficient work *)
+   If[$ParallelizationEnabled && posLen > 1,
+     (* Use ParallelTable to process positive literals in parallel *)
+     erg = Flatten[
+       ParallelTable[
+         Module[{localErg},
+           localErg = {};
+           akt1 = posList[[ii]];
+           Do[akt2 = negList[[jj]]; 
+             If[kconditionQ[akt1, akt2], 
+               localErg = Append[localErg, {akt1, akt2}]], 
+             {jj, 1, negLen}];
+           localErg
+         ], {ii, 1, posLen}], 1],
+     (* Sequential evaluation when parallelization is disabled *)
+     erg = {};
+     Do[akt1 = posList[[ii]];
+       Do[akt2 = negList[[jj]]; 
+         If[kconditionQ[akt1, akt2], 
+           erg = Append[erg, {akt1, akt2}]], {jj, 1, negLen}], 
+       {ii, 1, posLen}]
+   ];
    ZPrint["kpairs: ", erg][4];
    erg];
 (*kparts forms a list of K-pairs from a list of non-negated literals and a \
@@ -1363,7 +1416,7 @@ xyListenStreichen[multiausdruck_] :=
      "result of 3rd step of qe (elimination of the \[ForAll] \
 quantifiers by substitution with the selected existential \
 y-variable): ", xyLS][3];
-   erg = Map[standardization, xyLS];
+   If[$ParallelizationEnabled && Length[xyLS] > 1, erg = ParallelMap[standardization, xyLS], erg = Map[standardization, xyLS]];
    erg = DeleteDuplicates[erg];
    ZPrint["duplicates deleted (tradi-output of qe): ", 
      tradi[TableForm[erg]]][3];
@@ -1563,7 +1616,7 @@ em[ausdruck_ /;
      endErg = Flatten[Append[endErg, ergAkt[ii]]], {ii, 1, wieviele}]];
    ZPrint["result of em: ", endErg][4];
    ZPrint["result of em with deleted cases: ", endErg][4];
-   endErg = Map[standardization, endErg];
+   If[$ParallelizationEnabled && Length[endErg] > 1, endErg = ParallelMap[standardization, endErg], endErg = Map[standardization, endErg]];
    endErg = DeleteDuplicates[endErg];
    ZPrint["duplicates deleted (tradi-output of em): ", 
      tradi[TableForm[endErg]]][3];
@@ -1719,7 +1772,7 @@ program terminates. Otherwise, another iteration is \
 initiated, returning to the input of terminierung.*)
 
 decideIterativerTeil[ausdruck__] := 
-  Module[{kvargumente, klae, nachkv, kj, erg}, erg = ausdruck;
+  Module[{kvargumente, klae, nachkv, kj, erg, nachkvList}, erg = ausdruck;
    While[(erg =!= sat) && (erg =!= False), 
     ZPrint["starting iteration"][1];
     kvargumente = 
@@ -1732,12 +1785,26 @@ decideIterativerTeil[ausdruck__] :=
     klae = Length[kvargumente];
     ZPrint["number of partial expressions: ", klae][4];
     If[klae > 0,
-      Do[nachkv[ii] = 
-       konjunktverdopplungS[emSimplifying[First[kvargumente[[ii]]]]]; 
-      erg = 
-       MapAll[ReplaceAll[#, 
-          RuleDelayed[First[kvargumente[[ii]]], nachkv[ii]]] &, 
-        erg], {ii, 1, klae}], erg = konjunktverdopplungS[erg]];
+      (* Parallel processing of partial expressions when enabled and multiple expressions *)
+      If[$ParallelizationEnabled && klae > 1,
+        (* Use ParallelTable to process partial expressions in parallel *)
+        nachkvList = ParallelTable[
+          konjunktverdopplungS[emSimplifying[First[kvargumente[[ii]]]]], 
+          {ii, 1, klae}];
+        (* Apply all replacements sequentially to maintain order *)
+        Do[nachkv[ii] = nachkvList[[ii]];
+          erg = MapAll[ReplaceAll[#, 
+            RuleDelayed[First[kvargumente[[ii]]], nachkv[ii]]] &, erg], 
+          {ii, 1, klae}],
+        (* Sequential processing when parallelization is disabled or only one expression *)
+        Do[nachkv[ii] = 
+          konjunktverdopplungS[emSimplifying[First[kvargumente[[ii]]]]]; 
+          erg = MapAll[ReplaceAll[#, 
+            RuleDelayed[First[kvargumente[[ii]]], nachkv[ii]]] &, erg], 
+          {ii, 1, klae}]
+      ], 
+      erg = konjunktverdopplungS[erg]
+    ];
     ZPrint["Expression to evaluate by module terminierung ", 
       tradi[erg]][3];
     erg = terminierung[erg]];
