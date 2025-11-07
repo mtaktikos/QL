@@ -1267,8 +1267,8 @@ Existenzquantor genommen.*)
    If[step11k == 0, erg = {oo[out[1]], q2output[[2]], q2output[[3]]}, 
     erg = Table[{oo[out[ii]], q2output[[2]], q2output[[3]]}, {ii, 1, 
        step11k}]];
-   (*"oo" kennzeichnet hier die outputs, um in der der Def. 
-   von lle die L�nge der outputs bestimmen zu k�nnen.*)
+   (*"oo" marks the outputs here in order to determine \
+the length of the outputs in the definition of lle.*)
    erg = 
     MapAll[ReplaceAll[#, 
        RuleDelayed[alle[{lv_}, innen_], 
@@ -1442,7 +1442,7 @@ emSimplifyingCore[
 emSimplifying[expression_] := 
   FixedPoint[emSimplifyingCore, expression];
 
-(*A. HILFSBEFEHLE F�R em*)
+(*A. HELPER COMMANDS FOR em*)
    KS = Compile[{{n, _Integer}, {k, _Integer}}, 
    Module[{h, ss = Range[k], x}, Table[(h = Length[ss]; x = n;
       While[x === ss[[h]], h--; x--];
@@ -1590,8 +1590,8 @@ emExpressionQ[ausdruck_] :=
      innen_ /; 
       Not[FreeQ[innen, 
         ein[{lv2_}, innen2_ /; (Head[innen2] === And)]]]]]];
-(*"emExpressionQ" pr�ft, ob die Anwendungsbedingungen f�r em \
-vorliegen.*)
+(*"emExpressionQ" checks whether the application conditions for em \
+are present.*)
 
 konjunktverdopplungS[disjunkte_ /; Head[disjunkte] =!= Or] :=
   Module[{se, que, ee, disneu },
@@ -1652,15 +1652,15 @@ applied to the second conjunct."][2.5];
 terminierung[ausdruck_] := 
   Module[{kvargumente, klae, termstep3, termstep4, termstep5, 
     termstep8, erg}, erg = ausdruck;
-   (*Im Folgenden bedienen wir uns eines Tricks und ersetzen alle \
-innersten Teilausdr�cke,die nicht sat oder False sind durch "nonsat". 
-   Dieser Trick ist n�tig,
-   um Simplify und satDisjunktion auch auf komplexe Ausdr�cke mit \
-�ber 100 Teilausdr�cken anwenden zu k�nnen.Dieser Tricke ist zul�ssig,
-   da wir den Gesamtausdruck nur in Abh�ngigkeit zu "sat" und "False" \
-Teilausdr�cken asl sat oder False identifizieren wollen.Falls \
-"ausdruck" nicht als False oder sat identifziert werden kann,
-   wird mit "ausdruck" weiter gerechnet.*)
+   (*In the following, we use a trick and replace all \
+innermost partial expressions that are not sat or False with "nonsat". 
+   This trick is necessary
+   to be able to apply Simplify and satDisjunktion to complex expressions with \
+over 100 partial expressions. This trick is permissible
+   because we only want to identify the overall expression as sat or False depending on "sat" and "False" \
+partial expressions. If \
+"ausdruck" cannot be identified as False or sat,
+   we continue calculating with "ausdruck".*)
    kvargumente = 
     DeleteDuplicates[
      Cases[erg, {teilausdruck_} /; (teilausdruck =!= 
@@ -1687,17 +1687,16 @@ Teilausdr�cken asl sat oder False identifizieren wollen.Falls \
     MapAll[ReplaceAll[#, 
        RuleDelayed[{etw_} /; (Not[xListeQ[{etw}]] && 
            Not[yListeQ[{etw}]]), (etw)]] &, termstep4];
-   (*Der Zusatz \
-"(Not[xListeQ[{etw1,etw2}]]&&Not[yListeQ[{etw1,etw2}]])" verhindert,
-   dass die Kommata in Variablenlisten durch "\[And]" bzw.die \
-geschweiften Klammern um die Variablen durch runde Klammern ersetzt \
-werden.*)ZPrint["Expression to be evaluated as False or sat : ", 
+   (*The addition \
+"(Not[xListeQ[{etw1,etw2}]]&&Not[yListeQ[{etw1,etw2}]])" prevents
+   the commas in variable lists from being replaced by "\[And]" and the \
+curly brackets around the variables by round brackets.*)ZPrint["Expression to be evaluated as False or sat : ", 
      tradi[termstep4]][3];
    termstep5 = Simplify[termstep4];
-   (*Es muss hier Simplify verwendet werden,
-   da nur Simplify quantorenlogische Formel evaluiert.Simplify[
+   (*Simplify must be used here,
+   as only Simplify evaluates quantifier logic formulas.Simplify[
    ein[{y},f[y]\[And]\[Not]f[y]]]=False,
-   gleiches gilt nicht f�r BooleanMinimize.*)
+   the same does not apply to BooleanMinimize.*)
    If[termstep5 === False, 
     ZPrint["False evaluation by Simplify succeeded: ", 
       tradi[termstep5]][2]; Return[False], 
@@ -1711,14 +1710,13 @@ werden.*)ZPrint["Expression to be evaluated as False or sat : ",
       termstep8]*)][3]];
    ZPrint["The following expression must be further evaluated: ", 
      erg][2]; erg]; 
-(*"terminierung" pr�ft ob die logische Umformung des gesamten \
-abgeleiteten Ausdruckes gem�� Simplify als False oder gem�� \
-satDisjunktion als sat identifiziert werden dann. Ist dies der Fall, \
-wird, "False" bzw. "sat" zur�ckgegeben. Dies bewirkt, dass in \
-"decideiterativerTeil" keine weitere Iteration eingeleitet und das \
-Programm terminiert. Ansonsten wird eine weitere Iteration \
-eingeleitet, wobei
-wieder auf den input von terminierung zur�ckgegangen wird.*) 
+(*"terminierung" checks whether the logical transformation of the entire \
+derived expression is identified as False according to Simplify or as \
+sat according to satDisjunktion. If this is the case, \
+"False" or "sat" is returned respectively. This causes in \
+"decideiterativerTeil" no further iteration to be initiated and the \
+program terminates. Otherwise, another iteration is \
+initiated, returning to the input of terminierung.*)
 
 decideIterativerTeil[ausdruck__] := 
   Module[{kvargumente, klae, nachkv, kj, erg}, erg = ausdruck;
@@ -1748,7 +1746,7 @@ decideIterativerTeil[ausdruck__] :=
 
 eingabepruefung[ausdruck_] :=
   Module[{erg, vara, varwf},
-   (* eingabepruefung pr�ft nicht,ob eine Variable gebunden ist!*)
+   (* eingabepruefung does not check whether a variable is bound!*)
    erg = ausdruck;
    vara = Length[Cases[ausdruck, {var_}, {0, Infinity}]];
    varwf = Length[Cases[wf[ausdruck], {var_}, {0, Infinity}]];
@@ -1781,19 +1779,18 @@ list?)"]];
    erg];
 
 
-(*EXPANSATION*)
-(* Dieses Modul wird einmalig nach der eingabepruefung angewendet, um 
-1. alle Junktoren bis auf And (&&,\[And])\[MediumSpace]\
+(*EXPANSION*)
+(* This module is applied once after input checking to 
+1. eliminate all junctors except And (&&,\[And])\[MediumSpace]\
 \[FilledVerySmallSquare]\[MediumSpace] Or (||,\[Or])\[MediumSpace]\
-\[FilledVerySmallSquare]\[MediumSpace] Not (!,�) zu beseitigen,
-  2. negative Normalformeln (NNF) zu generieren. 
-Dies beides wird geleistet, indem LogicalExpand mittels "expansation" \
-maximal angewendet wird. Ausserdem m�ssen Negationen vor Quantoren \
-beseitigt werden, was Mathematica nicht im Rahmen von LogicalExpand \
-macht.
-Im weiteren Verauf des Algorithmus muss nicht mehr expandiert werden, \
-da an keiner Stelle neue Junktoren eingef�hrt oder Negatoren nach \
-aussen gebracht werden. *)
+\[FilledVerySmallSquare]\[MediumSpace] Not (!,¬),
+  2. generate negative normal formulas (NNF). 
+Both are accomplished by maximal application of LogicalExpand via "expansion". \
+Furthermore, negations before quantifiers must be eliminated, which Mathematica \
+does not do as part of LogicalExpand.
+In the further course of the algorithm, no more expansion is needed, \
+since new junctors are not introduced or negators moved \
+outward at any point. *)
 
 InnerhalbAlleexpand[expression_] :=
   Module[{erg},
@@ -1852,8 +1849,8 @@ decide[ausdruck_] :=
   Module[{erg, di},
    erg = eingabepruefung[ausdruck];  
    If[StringQ[erg], Return[erg]];
-   (* Diese Zeile ist n�tig, damit nicht-
-   wohlgeformte Ausdr�cke nicht evaluiert werden.*)
+   (* This line is necessary to prevent non-
+   well-formed expressions from being evaluated.*)
    erg = lve[erg];
    erg=maxIndizierung[erg];
  (* erg = variableconverting[erg]; *)
@@ -1867,11 +1864,10 @@ decide[ausdruck_] :=
 
 ZPrint[toprint__][level_] := 
   If[level <= printproofstepslevel, Print[toprint]];
-(* Es werden Printbefehle auf verschiedenen Ebenen definiert.
-Der user kann das level umstellen, dann muss mit "Remove" + \
-NeuEinlesen (=Shift+Enter in diesem Block) das neue level aktiviert \
-werden.
-Ausser diesem level sollte vom user nichts ver�ndert werden.*)
+(* Print commands are defined at different levels.
+The user can change the level, then the new level must be activated with "Remove" + \
+reloading (=Shift+Enter in this block).
+Except for this level, nothing should be changed by the user.*)
 
 (*printproofstepslevel = 5;*)
 (*Diesen Befehl auskommentieren, wenn er im Rahmen der nb-Datei wirksam sein soll.*)
@@ -1888,31 +1884,30 @@ steps concering the evalutation of each iteration result.
 5. Adds to 4 details of subordinated functions.*)
   
 
-(* Zur Zeit: Eingabe von logischen Ausdr�cken in \
-Mathematica-Schreibweise n�tig (= InputForm). Folgende Junktoren sind \
-erlaubt, aber nicht in der in Klammern zuletzt genannten \
-traditionellen Schreibweise:
+(* Currently: Input of logical expressions in \
+Mathematica notation required (= InputForm). The following junctors are \
+allowed, but not in the traditional notation mentioned last in parentheses:
 And (&&,\[And])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] \
 Or (||,\[Or])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Not \
-(!,�)\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Nand (\
+(!,¬)\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Nand (\
 \[Nand])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Nor (\
 \[Nor])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Xor (\
 \[Xor])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Implies (\
 \[Implies])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] \
 Equivalent (\[Equivalent])\[MediumSpace]\[FilledVerySmallSquare]\
 \[MediumSpace]
-F�r die Quantoren sind "alle[{v-Liste}, scope]" und "ein[{v-Liste}, \
-scope]" zu verwenden. 
-Da das Programm sehr schnell sehr komplizierte Ausdr�cke erzeugt, \
-empfiehlt es sich zun�chst mit
-"standardization[expansion[[inputformel]]" eine Disjunktion von \
-Konjunktionen geschlossener Strukturen zu erzeugen und dann nur die \
-einzelnen Disjunkte zu pr�fen. Ist ein Disjunkt sat, ist inputformel \
-sat. Sind alle Disjunkte False, ist inputformel False.*)
+For the quantifiers, use "alle[{v-list}, scope]" and "ein[{v-list}, \
+scope]". 
+Since the program very quickly generates very complicated expressions, \
+it is recommended to first use
+"standardization[expansion[[inputformula]]" to generate a disjunction of \
+conjunctions of closed structures and then only check the \
+individual disjuncts. If one disjunct is sat, then inputformula is \
+sat. If all disjuncts are False, then inputformula is False.*)
 
-(* Grundstein f�r Interaktivmodul - es gibt aber Probleme bei der \
-Eingabe, nur Mathematica-Ausdr�cke sind erlaubt, esc nicht zu \
-verwenden.*)
+(* Foundation for interactive module - but there are problems with \
+input, only Mathematica expressions are allowed, esc should not be \
+used.*)
 (*expressiontoevalutate=Input["Determine a logical expression of pure \
 first-order logic?"];
 eingabepruefung[expressiontoevaluate];
