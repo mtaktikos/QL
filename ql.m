@@ -27,8 +27,7 @@ If[$ParallelizationEnabled && Length[Kernels[]] == 0,
   LaunchKernels[];
   If[Length[Kernels[]] > 0,
     Print["Parallel processing enabled with ", Length[Kernels[]], " kernels"];
-    (* Distribute definitions to parallel kernels *)
-    DistributeDefinitions["Timm`*"];,
+    (* Distribute definitions to parallel kernels - will be done automatically by parallel functions *),
     Print["Warning: Parallel processing requested but no kernels available"];
     $ParallelizationEnabled = False;
   ]
@@ -267,14 +266,14 @@ kparts[posList_ , negList_] :=
      (* Use ParallelTable to process positive literals in parallel *)
      erg = Flatten[
        ParallelTable[
-         Module[{localErg},
-           localErg = {};
+         Module[{akt1, akt2},
            akt1 = posList[[ii]];
-           Do[akt2 = negList[[jj]]; 
-             If[kconditionQ[akt1, akt2], 
-               localErg = Append[localErg, {akt1, akt2}]], 
-             {jj, 1, negLen}];
-           localErg
+           Select[
+             Table[akt2 = negList[[jj]]; 
+               If[kconditionQ[akt1, akt2], {akt1, akt2}, Nothing], 
+               {jj, 1, negLen}],
+             # =!= Nothing &
+           ]
          ], {ii, 1, posLen}], 1],
      (* Sequential evaluation when parallelization is disabled *)
      erg = {};
