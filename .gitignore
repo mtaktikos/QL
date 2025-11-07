@@ -1,0 +1,14 @@
+# Mathematica temporary files
+*.nb~
+*.m~
+*.mx
+*.wl~
+*.wls~
+
+# Mathematica cache
+.DS_Store
+Thumbs.db
+
+# Output files
+*.log
+*.out
