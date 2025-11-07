@@ -15,47 +15,45 @@ untradi::usage = "untradi[x] converts a traditional expression in input form"
 
 
 
-(*Nicht vergessen: Erweitung von sat-Diskunktion durch Bezug auf \
-k-pairs: Wenn k-pairs={}, dann sat.
-Des Weiteren: nenne "standardization" "optimize". Eine \
-Standardizierung soll dann die Form der Ausdrücke betreffen: lve, \
-variableconverting und expansion muss immer als input der Iterationen \
-und optimize vorausgesetzt werden können. Hier kann noch vereinfacht \
-und optimiert werden.*)
+(*Don't forget: Extension of sat-disjunction by reference to \
+k-pairs: If k-pairs={}, then sat.
+Furthermore: call "standardization" "optimize". A \
+standardization should then concern the form of expressions: lve, \
+variableconverting and expansion must always be assumed as input of the iterations \
+and optimize. This can still be simplified \
+and optimized.*)
 
-(*Ordnung der Befehle: Die Befehle auf der obersten Hierarchieebene \
-stehen zum Schluß. Wenn man den Ablauf des Programmes verstehen will, \
-empfiehlt es sich, das Programm von hinten nach vorne durchzugehen.*)
+(*Order of commands: The commands at the top hierarchy level \
+are at the end. If you want to understand the program flow, \
+it is recommended to go through the program from back to front.*)
 
 (* SETATTRIBUTES *)
 SetAttributes[And, Orderless];
 SetAttributes[Or, Orderless];
-(* Von der Ordnung der Elemente der And- und Or-Listen wird \
-abgesehen. *)
+(* The order of elements in And- and Or-Lists is ignored. *)
 
 (*FALSE, TRUE, SAT*)
-(*A. ERWEITERUNG VON "False" UND "True"*)
-(* Die folgenden Befehle ergänzen die rein aussagenlogisch \
-definierten "False" und "True" aus Mathematica. *)
+(*A. EXTENSION OF "False" AND "True"*)
+(* The following commands extend the purely propositional logic \
+defined "False" and "True" from Mathematica. *)
 ein[{lv_}, False] := False;
 alle[{lv_}, False] := False;
 ein[{lv_}, True] := True;
 alle[{lv_}, True] := True;
 
 (*B. sat*)
-(*"sat" steht für "satisfiable" bzw. genauer: \
-"nicht-kontradiktorisch". Der Algorithmus entscheidet, ob ein \
-Ausdruck der reinen Quantorenlogisk kontradiktorisch ist oder nicht.
-Er leitet erschöpfend explizite Kontradiktionen bzw. explizit \
-erfüllbare Ausdrücke ab. Explizite Kontradiktionen werden bereits \
-durch Mathematica als "False" kennzeichnet und durch Simplify \
-identifiziert.
- "Explizit erfüllbare Ausdrücke" sind solche die keine Allquantoren \
-enthalten und nicht False sind. Wir kennzeichnen sie durch "sat" und \
-identifizieren sie mittels des Moduls "satExpression".
-  Zwecks Optimierung verwenden wir noch das Modul "satDisjunktion", \
-das eine Disjunktion als erfüllbar identifiziert, sobald ein Disjunkt \
-"sat" ist.*)
+(*"sat" stands for "satisfiable" or more precisely: \
+"not contradictory". The algorithm decides whether an \
+expression of pure quantifier logic is contradictory or not.
+It exhaustively derives explicit contradictions or explicitly \
+satisfiable expressions. Explicit contradictions are already \
+marked as "False" by Mathematica and identified by Simplify.
+ "Explicitly satisfiable expressions" are those that contain no universal quantifiers \
+and are not False. We mark them as "sat" and \
+identify them using the "satExpression" module.
+  For optimization purposes we also use the "satDisjunktion" module, \
+which identifies a disjunction as satisfiable as soon as one disjunct is \
+"sat".*)
 
 satExpression[expression_] := 
   If[FreeQ[Simplify[expression], 
@@ -63,16 +61,16 @@ satExpression[expression_] :=
         FreeQ[Simplify[expression], alle[{lv__}, etwas_]]) || (Not[
          Simplify[expression] === False] && 
         kpairs[expression] === {} )), sat, expression]; 
-(*satExpression identifiziert einen Ausdruck als "sat" (= \
-satisfiable, i.e. non-contradictory), wenn er nicht False ist und \
-keine Allquantoren mehr enthalten sind oder wenn er nicht False ist \
-und keine K-paare enthalten sind. Das Modul setzt nun mit kpairs \
-maxIndizierung voraus. (Achtung: Kontrollieren, ob diese Bedingung \
-immer erfüllt ist, wenn satExpression aufgerufen wird.*)
+(*satExpression identifies an expression as "sat" (= \
+satisfiable, i.e. non-contradictory), if it is not False and \
+contains no more universal quantifiers or if it is not False and \
+contains no K-pairs. The module now assumes maxIndizierung with kpairs. \
+(Attention: Check whether this condition \
+is always fulfilled when satExpression is called.*)
 
 ein[{lv_}, sat] := sat; 
 alle[{lv_}, sat] := sat;
-(* Diese Befehle sind analog zu denen Erweiterungen von "False" und \
+(* These commands are analogous to the extensions of "False" and \
 "True".*)
 
 satDisjunktion[ausdruck_] :=
@@ -88,11 +86,10 @@ satDisjunktion[ausdruck_] :=
     If[erg =!= sat, erg = Apply[Or, Table[dd[ii], {ii, 1, lae}]]]];
    ZPrint["result of satDisjunktion: ", tradi[erg]][4];
    erg];
-(*"satDisjunktion" identifiziert eine Disjunktion (mit 1 oder mehr \
-Disjunkten) als "sat" wenn ein Disjunkt gemäß satExpression als "sat" \
-evaluiert wurde.*)
+(*"satDisjunktion" identifies a disjunction (with 1 or more \
+disjuncts) as "sat" if a disjunct has been evaluated as "sat" according to satExpression.*)
 
-(* UMFORMUNGEN IN PRINTAUSDRÜCKE (tradi) UND EVALUATIONSAUSDRÜCKE \
+(* TRANSFORMATIONS INTO PRINT EXPRESSIONS (tradi) AND EVALUATION EXPRESSIONS \
 (untradi) *)
 tradi[ausdruck_ ] :=
   Module[{erg},
@@ -104,12 +101,12 @@ tradi[ausdruck_ ] :=
        RuleDelayed[alle[{xx_}, rest_], alle[xx, rest]]] &, erg];
    erg = TraditionalForm[erg /. {alle -> ForAll, ein -> Exists}];
    erg];
-(* "tradi" formt Mathematica Ausdrücke in logische Ausdrücke zwecks \
-Printausgabe an den user um. Doppelte geschweifte Klammern werden \
-allerdings als runde ausgegeben.
-Deshalb wird in den Printausgaben, in denen geschweifte Klammern \
-wichtig sind, Mathematica-Ausdrücke ausgegeben. Mit diesen wird auch \
-intern operiert.*)
+(* "tradi" transforms Mathematica expressions into logical expressions for \
+print output to the user. However, double curly brackets are \
+output as round brackets.
+Therefore, in print outputs where curly brackets are \
+important, Mathematica expressions are output. These are also used \
+internally.*)
  untradi[ausdruck__] :=
   Module[{erg},
    erg = 
@@ -124,8 +121,7 @@ intern operiert.*)
        RuleDelayed[alle[xx_, rest_] /; Not[ListQ[xx]], 
         alle[{xx}, rest]]] &, erg];
    erg];
-(* "untradi" formt logische Ausdrücke wieder in Mathematica Ausdrücke \
-um *)
+(* "untradi" transforms logical expressions back into Mathematica expressions *)
 wf[ausdruck_] :=
   Module[{erg},
    erg = Replace[ausdruck, 
@@ -137,40 +133,39 @@ wf[ausdruck_] :=
       ein[{mm__}, aa_], (Exists[{mm}, aa] /. {Exists -> ein})], {0, 
       Infinity}];
    erg];
-(* "wf" ersetzt ForAll durch "alle" und "Exists" durch "ein" und \
-wieder zurück. ForAll / Exists wird Mathematicaintern nur gesetzt, \
-wenn diese einen Wirkungsbereich haben.
-Durch die doppelte Ersetzung werden Quantoren ohne Wirkungsbereiche \
-gelöscht. 
-Der Befehl bewirkt also, dass überflüssige Quantoren ohne \
-Wirkungsbereich eliminiert werden. wf ist nötig, wenn Umformungen \
-u.a. "sat" im Wirkungsbereich von Quantoren erzeugen. Beispiel: \
+(* "wf" replaces ForAll with "alle" and "Exists" with "ein" and \
+back again. ForAll / Exists is only set internally by Mathematica \
+if they have a scope.
+Through the double replacement, quantifiers without scopes are \
+deleted. 
+The command thus eliminates superfluous quantifiers without \
+scope. wf is necessary when transformations \
+generate "sat" within the scope of quantifiers, among other things. Example: \
 decide[alle[{x},ein[{y},o[x,y]\[And]p[y]]]].*)
 
-(*NICHT LOGISCH-SPEZIFISCHE HILFSBEFEHLE*)
+(*NON-LOGICALLY SPECIFIC HELPER COMMANDS*)
 SubsetQ[ll1_List, ll2_List] := 
   Sort[Intersection[ll1, ll2]] == Sort[ll1];
 SubsetQ[{}, x_] := True;
-(* "SubsetQ" fragt, ob "ll1_List" Teilmenge von "ll2_List" ist.
-SubsetQ stammt aus Combinatorica-Package von Mma im Verzeichnis \
+(* "SubsetQ" asks whether "ll1_List" is a subset of "ll2_List".
+SubsetQ comes from Combinatorica package of Mma in the directory \
 AddOns\LegacyPackages\DiscreteMath.
-Die zweite Zeile, die angibt, daß die leere Menge Teilmenge jeder \
-Menge ist, hat keinerlei Auswirkung auf das Logikprogramm und wurde \
-nur aufgenommen, damit Kritiker keinen inkompletten SubsetQ-Befehl \
-monieren.*)
+The second line, which states that the empty set is a subset of every \
+set, has no effect on the logic program and was \
+only included so that critics cannot complain about an incomplete SubsetQ command.*)
 listenform[ausdruck_] := 
   Table[ausdruck[[ii]], {ii, 1, Length[ausdruck]}];
-(* "listenform" listet alle Elemente von "ausdruck" auf (in \
-Mathematica ist jeder Ausdruck selbst eine Liste mit einem Kopf). *)
+(* "listenform" lists all elements of "ausdruck" (in \
+Mathematica every expression itself is a list with a head). *)
 unabhaengigQ[ausdruck_, pliste_] := 
   Apply[And, 
    Table[FreeQ[ausdruck, pliste[[ii]]], {ii, 1, Length[pliste]}]];
-(* "unabhaengigQ" fragt, ob "ausdruck" frei von all den Elemente von \
-"pListe" ist. *)
+(* "unabhaengigQ" asks whether "ausdruck" is free of all elements of \
+"pListe". *)
 
 
-(* LOGISCHE HILFSBEFEHLE *)
-(* A. ALLGEMEINE LOGISCHE HILFSBEFEHLE *)
+(* LOGICAL HELPER COMMANDS *)
+(* A. GENERAL LOGICAL HELPER COMMANDS *)
 
 LiteralQ[expression_] := 
   FreeQ[expression, And] && FreeQ[expression, Or] && 
@@ -179,11 +174,11 @@ LiteralQ[expression_] :=
      List) && (ersterBuchstabe[expression] =!= 
      x) && (ersterBuchstabe[expression] =!= 
      y) && (Head[ersterBuchstabe[expression]] === Symbol);
-(*LiteralQ identifiziert Literale. 
-LiteralQ identifiziert für jedes negierte Literal auch noch ein \
-nicht-negiertes Literal. Um dies auszuschliessen, müssen wir in \
-posList negierte Literale durch "ooo" ersetzen und die entsprechenden \
-Teilausdrücke nicht als positive Literale identifizieren.*)
+(*LiteralQ identifies literals. 
+LiteralQ also identifies a non-negated literal for every negated literal. \
+To exclude this, we must replace negated literals with "ooo" in \
+posList and not identify the corresponding \
+partial expressions as positive literals.*)
 
 posList[expression_] :=
   Module[{expr, poslit},
@@ -197,15 +192,15 @@ posList[expression_] :=
       partialexpr_ /; (LiteralQ[partialexpr] && 
          partialexpr =!= ooo), {0, Infinity}]];
    ZPrint["list of unnegated literals: ", poslit][5]; poslit];
-(*posList identifiziert die nicht-negierten Literale in einem \
-Ausdruck. Um nicht positive Literale zu identifizieren, die negiert \
-sind, werden vorher alle negierten Literale durch einen Trick in \
-"ooo"-Literale umgeformt, die nicht identifiziert werden.*)
+(*posList identifies the non-negated literals in an \
+expression. To avoid identifying positive literals that are negated, \
+all negated literals are first transformed into \
+"ooo" literals using a trick, which are not identified.*)
 negList[expression_] := 
   DeleteDuplicates[
    Cases[expression, 
     Not[partialexpr_ /; LiteralQ[partialexpr]], {0, Infinity}]];
-(*negList identifiziert die negierten Literale in einem Ausdruck.*)
+(*negList identifies the negated literals in an expression.*)
 
 kconditionQ[poslit_ /; (LiteralQ[poslit] && Head[poslit] =!= Not), 
    Not[neglit_] /; LiteralQ[Not[neglit]]] := 
@@ -222,12 +217,12 @@ kconditionQ[poslit_ /; (LiteralQ[poslit] && Head[poslit] =!= Not),
      value = False; Break[]]
     , {ii, 1, Length[poslit]}];
    value];
-(*kconditionQ prüft, ob zwei Literale die Bedingungen für K-Paare \
-erfüllen: Sie müssen dieselben Köpfe und dieselbe Anzahl an \
-Argumenten haben und an jeder n-ten Argumentstelle entweder \
-identische Argumente haben oder an mindestens einer der beiden \
-Argumentstelle eine x-Variable. Wir setzen in diesem Modul \
-maxIndizierung voraus.*)
+(*kconditionQ checks whether two literals satisfy the conditions for K-pairs: \
+They must have the same heads and the same number of \
+arguments, and at each nth argument position must have either \
+identical arguments or at least one of the two \
+argument positions must have an x-variable. We assume \
+maxIndizierung in this module.*)
 kparts[posList_ , negList_] :=
   Module[{akt1, akt2, erg},
    erg = {};
@@ -238,8 +233,8 @@ kparts[posList_ , negList_] :=
       Length[negList]}], {ii, 1, Length[posList]}]; 
    ZPrint["kpairs: ", erg][4];
    erg];
-(*kparts bildet aus einer Liste nicht-negierter Literale und einer \
-Liste negierter Literale eine Liste von K-pairs.*)
+(*kparts forms a list of K-pairs from a list of non-negated literals and a \
+list of negated literals.*)
 kpairs[expression_] :=
   Module[{neglist, poslist, kpairlist},
    neglist = negList[expression];
@@ -247,26 +242,24 @@ kpairs[expression_] :=
    poslist = posList[expression];
    kpairlist = kparts[poslist, neglist];
    kpairlist];
-(*kpairs bildet aus einem Ausdruck alle möglichen K-pairs. Dieses \
-Modul setzt maxIndizierung voraus!*)
+(*kpairs forms all possible K-pairs from an expression. This \
+module assumes maxIndizierung!*)
 
-(*B. LOGISCHE OPTIMIERUNGEN*)
+(*B. LOGICAL OPTIMIZATIONS*)
 
 (*B1 maxIndizierung*)
-(*Der Befehl maxIndizierung, der Ziel der folgenden Definitionen ist, \
-ersetzt Variablen, so dass allquantifizierte Variablen x-Variable und \
-existenzquantifizierte y-Variable sind und diese Variablen so \
-indiziert sind, dass 
-jeder Quantor durch seine Variable eindeutig identifiziert werden \
-kann. Er wird zwecks Übersichtlichkeit einmal am Anfang des \
-Algorithmus nach der Eingabeprüfung verwendet. Vor allem wird er \
-immer zu Beginn von qe und em angewendet, um innerhalb dieser Module \
-Quantoren durch ihre Variable identifizieren zu können.*)
+(*The command maxIndizierung, which is the target of the following definitions, \
+replaces variables so that universally quantified variables are x-variables and \
+existentially quantified variables are y-variables, and these variables are indexed so that \
+each quantifier can be uniquely identified by its variable. It is used once at the beginning of the \
+algorithm after input checking for clarity. Most importantly, it is always \
+applied at the beginning of qe and em to be able to identify \
+quantifiers by their variables within these modules.*)
 
 indicesToSameLevel[kk_[jj__]] := 
   kk[jj] //. gg_[vv_][ww__] -> gg[vv, ww]; 
-(*"indicesToSameLevel" schreibt mehrere Indices in eine eckige \
-Klammer: z.B. [1,2,3] statt [1][2][3].*)
+(*"indicesToSameLevel" writes multiple indices into one square \
+bracket: e.g. [1,2,3] instead of [1][2][3].*)
 indicesToOriginalLevel[
    kk_[ll__ /; (Union[ Map[Head, {ll}]] === {Integer})]] := 
   Module[{erg = kk}, Do[erg = erg[{ll}[[ii]]], {ii, 1, Length[{ll}]}];
@@ -343,24 +336,23 @@ indices: ", tradi[expr]][4];
      tradi[expr]][4];
    expr];
 
-(*DIE FUNKTION le*)
-(* "le" steht für "logical equivalence". le ist eine wesentliche \
-Funktion des Algorithmus. Durch le werden Formeln in optimierte \
-Disjunktionen von Konjunktionen geschlossener Strukturen (= \
-distribute normal forms of FOL, kurz DNFFOL) durch reine \
-Äquivalenzumformungen gebracht.
-Das Programm formt gleich zu Beginn im Rahmen des Moduls \
-"standardization" den input-Ausdruck durch le um. Anschließend werden \
-im Wesentlichen nur noch die Funktionen qe und em iteriert. le bzw. \
-standardization ist Bestandteil von qe und le: le garantiert, dass \
-der output von qe und le Listen von DNFFOL sind.
-le sorgt dafür, dass die Wirkungsbereiche der Quantoren minimiert \
-werden. Demzufolge werden die PN-Gesetze in umgekehrter Reihenfolge \
-wie bei der Bildung pränexer Normalformen angewendet. Deshalb baut le \
-wesentlich auf pn auf.*)
+(*THE FUNCTION le*)
+(* "le" stands for "logical equivalence". le is an essential \
+function of the algorithm. Through le, formulas are transformed into optimized \
+disjunctions of conjunctions of closed structures (= \
+distribute normal forms of FOL, in short DNFFOL) through pure \
+equivalence transformations.
+The program transforms the input expression through le right at the beginning within the \
+"standardization" module. Subsequently, essentially only the functions qe and em are iterated. \
+le or standardization is a component of qe and le: le guarantees that \
+the output of qe and le are lists of DNFFOL.
+le ensures that the scopes of quantifiers are minimized. \
+Consequently, the PN-laws are applied in reverse order \
+compared to the formation of prenex normal forms. Therefore, le essentially \
+builds on pn.*)
 
 (*A. pn*)
-(* A .1. HILFSBEFEHLE FÜR PN-BEFEHLE*)
+(* A .1. HELPER COMMANDS FOR PN-COMMANDS*)
 alleimp[alle[{ll__}, innen_]] := Module[{innenAkt, lvAkku},
    innenAkt = innen; lvAkku = {ll};
    While[Head[innenAkt] === alle, 
@@ -373,16 +365,16 @@ einimp[ein[{ll__}, innen_]] := Module[{innenAkt, lvAkku},
     lvAkku = Flatten[Join[lvAkku, First[innenAkt]]]; 
     innenAkt = First[Rest[innenAkt]] ];
    ein[Sort[lvAkku], innenAkt]];
-(*Die vorangegangen Befehle "implodieren" Quantorenketten, d.h. \
-anstelle von alle[{x[1]},alle[{x[2]}, ...]] wird \
-alle[{x[1],x[2]},...] geschrieben. Analog für die anderen Fälle.*)
+(*The previous commands "implode" quantifier chains, i.e. \
+instead of alle[{x[1]},alle[{x[2]}, ...]] it is written \
+alle[{x[1],x[2]},...]. Analogous for the other cases.*)
 alleexp[alle[{ll__}, innen_]] := 
   Fold[alle[{#2}, #1] &, innen, Reverse[{ll}]];
 einexp[ein[{ll__}, innen_]] := 
   Fold[ein[{#2}, #1] &, innen, Reverse[{ll}]];
-(*Die vorangegangen Befehle "explodieren" Quantorenketten, d.h. \
-anstelle von alle[{x[1],x[2]},...] wird alle[{x[1]},alle[{x[2]}, \
-...]] geschrieben. Analog für die anderen Fälle.*)
+(*The previous commands "explode" quantifier chains, i.e. \
+instead of alle[{x[1],x[2]},...] it is written alle[{x[1]},alle[{x[2]}, \
+...]]. Analogous for the other cases.*)
 allepos[alle[lv_List, innen_]] :=
   Module[{llv, lvb, clv, lvbs, erg},
    llv = Length[lv];
@@ -395,23 +387,23 @@ allepos[alle[lv_List, innen_]] :=
    lvbs = Sort[lvb, #1[[2]] >= #2[[2]] &];
    erg = Table[lvbs[[ii, 1]], {ii, 1, llv}];
    alle[erg, innen]];
-(* allepos nimmt einen input, der mit einem Allquantor beginnt, und \
-sortiert die Laufvariablen dieses Allquantors nach der Häufigkeit \
-ihres Auftretens in den verschiedenen Teilausdrücken, d.h. wenn der \
-input aus zwei Teilausdrücken besteht, tritt eine Laufvariable \
-häufiger auf, die je einmal in jedem der beiden Teilausdrücke \
-auftaucht, als eine Laufvariable, die zehnmal in nur einem der \
-Teilausdrücke vorkommt. Um dies zu bewerkstelligen, erzeugen wir eine \
-Do-Schleife, die über die Anzahl llv der eingegebenen Laufvariablen \
-lv läuft und jeweils die Anzahl clv[i] der von der i-ten \
-Laufvariablen nicht unabhängigen Teilausdrücke feststellt. Nach der \
-Schleife erzeugen wir dann die Auflistung lvb aus der Anzahl llv \
-Paaren, die je aus der i-ten Laufvariable und der entsprechenden \
-Anzahl clv[i] bestehen, sortieren dann diese Paare so, dass \
-diejenigen mit größeren Anzahlen clv[i] den Vorrang bekommen, listen \
-daraus das Ergebnis erg der sortierten Laufvariablen auf, und der \
-output ist dann gleich dem input, nur mit sortierten Laufvariablen. \
-Beispiel: 
+(* allepos takes an input starting with a universal quantifier and \
+sorts the running variables of this universal quantifier according to the frequency \
+of their occurrence in the different partial expressions, i.e. if the \
+input consists of two partial expressions, a running variable occurs \
+more frequently if it appears once in each of the two partial expressions \
+than a running variable that occurs ten times in only one of the \
+partial expressions. To achieve this, we create a \
+Do loop that runs over the number llv of input running variables \
+lv and determines in each case the number clv[i] of partial expressions not independent of the i-th \
+running variable. After the \
+loop, we then create the listing lvb of the number llv \
+pairs, each consisting of the i-th running variable and the corresponding \
+number clv[i], then sort these pairs so that \
+those with larger numbers clv[i] get priority, list \
+from this the result erg of the sorted running variables, and the \
+output is then equal to the input, only with sorted running variables. \
+Example: 
 allepos[alle[{x1,x2,x4},(f[x1] && g[x2]) ||(j[x2] && h[x3]) && k[x2] || \
 l[x2] ]]
 alle[{x2,x1,x4},(f[x1]&&g[x2])||(j[x2]&&h[x3]&&k[x2])||l[x2]] *)  
@@ -427,7 +419,7 @@ einpos[ein[lv_List, innen_]] :=
    lvbs = Sort[lvb, #1[[2]] >= #2[[2]] &];
    erg = Table[lvbs[[ii, 1]], {ii, 1, llv}];
    ein[erg, innen]];
-(* Analog zu allepos *)
+(* Analogous to allepos *)
 lvi[ausdruck_] :=
     Module[{erg},
    erg = Replace[
@@ -435,13 +427,13 @@ lvi[ausdruck_] :=
       ein[{nn__}, innen_] :> einimp[ein[{nn}, innen]]} , {0, 
       Infinity}];
       wf[erg]];
-(*"lvi" = "Laufvariablenimplosion", Variablen einzelner Quantoren \
-werden in eine Liste zusammengefasst.*)
+(*"lvi" = "Running variable implosion", variables of individual quantifiers \
+are combined into a list.*)
 litexp[kk_[ll__]] := 
     If[(Union[ Map[Head, {ll}]] === {Integer}), 
       indicesToOriginalLevel[kk[ll]], kk[ll]];
-(*"litexp" bringt Indices von Variablen in die Standardform.
-Beispiel: x[1,2,3] -> x[1][2][3].*)
+(*"litexp" brings indices of variables to standard form.
+Example: x[1,2,3] -> x[1][2][3].*)
 lve[ausdruck_] :=
     Module[{erg},
    erg = Replace[
@@ -452,8 +444,8 @@ lve[ausdruck_] :=
    erg = Replace[erg, 
      x_[indizes__] :>  litexp[x[indizes]], {0, Infinity} ];
       wf[erg]];
-(*"lve" = "Laufvariablenexplosion". Die Variable in einer Liste \
-werden auf die Quantoren verteilt.*)
+(*"lve" = "Running variable explosion". The variables in a list \
+are distributed over the quantifiers.*)
 lvp[ausdruck_] :=
     Module[{erg},
    erg = Replace[
@@ -462,18 +454,18 @@ lvp[ausdruck_] :=
       ein[{nn__ /; (Length[{nn}] > 1)}, innen_] :>  
        einpos[ein[{nn}, innen]]}, {0, Infinity}];
       wf[erg]];
-(*"lvp" =  Im input werden alle Quantoren mit mehr als einer \
-Laufvariablen gefunden und diese Laufvariablen werden nach der Anzahl \
-ihrer Auftritte in den verschiedenen Teilausdrücken des inputs \
-sortiert. Z.B. in einem input mit nur zwei Teilausdrücken wird eine \
-Laufvariable, die je einmal in jedem der Teilausdrücke auftaucht,in \
-der Sortierung bevorzugt vor einer Laufvariablen, die sagen wir \
-zehnmal, aber in nur einem der Teilausdrücke auftaucht *) 
+(*"lvp" = In the input, all quantifiers with more than one \
+running variable are found, and these running variables are sorted according to the number \
+of their occurrences in the different partial expressions of the input. \
+For example, in an input with only two partial expressions, a \
+running variable that appears once in each of the partial expressions is preferred \
+in the sorting over a running variable that occurs, say, \
+ten times, but in only one of the partial expressions. *)
 
-(*A2. PN-BEFEHLE*)
+(*A2. PN-COMMANDS*)
 
-(*Die folgenden Befehle implementieren die pn-Gesetze, so dass der \
-Wirkungsbereich der Quantoren, wenn möglich, minimiert wird.*)
+(*The following commands implement the pn-laws so that the \
+scope of the quantifiers is minimized when possible.*)
 (*PN3*)pn3[list_] :=
   Module[{qlist, erg},
    qlist = lve[lvp[lvi[list]]];
@@ -535,8 +527,7 @@ apn[ausdruck_] :=
     Return[wf[erg]]];
    ausdruck]; 
 pn[ausdruck_] := FixedPoint[apn, ausdruck];
-(* Die pn-Regeln werden solange angewendet bis sich nichts mehr \
-verändert.*)
+(* The pn-rules are applied until nothing changes anymore.*)
 
 (*B. LE*)
 InnerhalbAlleCNF[list_] :=
@@ -557,18 +548,18 @@ InnerhalbEinDNF[list_] :=
    ZPrint["scope of existential quantifiers converted to DNF: ", 
      tradi[erg]][5];
    erg];
-(*Diese Befehle sichern die maximale Anwendbarkeit von PN9 und PN10.*)
+(*These commands ensure maximum applicability of PN9 and PN10.*)
 
 JunctorSimplify[aa_ /; Head[aa] =!= List] := 
   Simplify[LogicalExpand[aa]];
-(* Dieser Befehl wird zur Zeit nicht verwendet, könnte aber nützlich \
-sein. Er vereinfacht aussagenlogische Ausdrücke. Das kann u.U. auch \
-für scopes von Quantoren Anwendung finden: \
-alle[{x},JunctorSimplify[Implies[f[x],p]]] würde ganz
-richtig in alle[{x},p||!f[x]] umgeformt. Durch die Regeln alle[{x__}, \
-etwas_] -> alle[[x},JunctorSimplify[etwas]] und ein[{x__}, etwas_] -> \
-ein[{x}, JunctorSimplify[etwas]] kann der Befehl sinnvolle Anwendung \
-im Logikprogramm finden.*)
+(* This command is currently not used, but could be useful. \
+It simplifies propositional logic expressions. This can also \
+be applied to scopes of quantifiers: \
+alle[{x},JunctorSimplify[Implies[f[x],p]]] would be correctly
+transformed into alle[{x},p||!f[x]]. Through the rules alle[{x__}, \
+etwas_] -> alle[[x},JunctorSimplify[etwas]] and ein[{x__}, etwas_] -> \
+ein[{x}, JunctorSimplify[etwas]], the command can find useful application \
+in the logic program.*)
 
 QuantorSimplifyCore[list_] :=
   Module[{tm},
@@ -579,24 +570,22 @@ QuantorSimplifyCore[list_] :=
    tm = InnerhalbEinDNF[tm];
    tm = pn[tm];
    tm];
-(*Dieser Befehl definiert die Abfolge der Teilbefehle, die dann in le \
-durch den FixedPointbefehl iteriert werden bis sich nichts mehr \
-ändert.*)
+(*This command defines the sequence of sub-commands, which are then iterated \
+in le through the FixedPoint command until nothing changes anymore.*)
 
 (*IP3\[And]*)
-(* In den folgenden beiden Regeln habe ich entgegen der Empfehlung \
-Leonid Shifrins, der Mma Version 6 benutzt hat, die Benutzung von \
-MapAll[ReplaceRepeated[... einfach durch ReplaceRepeated ersetzt. \
-Alle Beispiele verliefen korrekt, und ich bin überzeugt,
-daß ab Verson 7 die Funktion ReplaceRepeated tatsächlich auf allen \
-Leveln eines Ausdrucks ersetzt *)
+(* In the following two rules, I have, contrary to the recommendation of \
+Leonid Shifrin, who used Mma Version 6, simply replaced the use of \
+MapAll[ReplaceRepeated[... with ReplaceRepeated. \
+All examples ran correctly, and I am convinced
+that from Version 7 onwards, the function ReplaceRepeated actually replaces at all \
+levels of an expression *)
 ip3and[expression_] :=
   Module[{expr1, expr2},
    expr1 = lvi[expression];
-   (*Wir müssen hier die implodierten Formen verwenden, 
-   denn sonst können wir ip3and nicht anwenden, 
-   wenn mehrere Existenzquantoren aufeinander in anderer Reihenfolge \
-auftreten.*)
+   (*We must use the imploded forms here, 
+   otherwise we cannot apply ip3and 
+   when multiple existential quantifiers occur in a different order.*)
    expr2 = 
     ReplaceRepeated[expr1, 
      RuleDelayed[(oo___ && ein[{yy1__}, ll1_And] && 
@@ -630,8 +619,8 @@ simple[expression_] :=
    If[expr =!= expression, 
     ZPrint["expression simplified by simple: ", tradi[expr]][4]];
    expr];
-(*"simple" vereinfacht Ausdrücke. Es gibt minindizierte Ausdrücke aus \
-(Vorsicht bei FixedPointbefehlen!)*)
+(*"simple" simplifies expressions. It outputs min-indexed expressions \
+(Caution with FixedPoint commands!)*)
 
  le[xx_ /; (Head[xx] =!= List) && (Not[FreeQ[xx, alle]] || 
        Not[FreeQ[xx, ein]])] :=
@@ -642,43 +631,43 @@ simple[expression_] :=
    tm = simple[tm];
    ZPrint["result of le: ", tradi[tm]][4];
    tm];
-(*Dies ist der eigentliche le Befehl für quantorenlogische Formeln.*)
+(*This is the actual le command for quantifier logic formulas.*)
 
 le[xx_ /; (Head[xx] =!= List) && (FreeQ[xx, alle] && 
        FreeQ[xx, ein])] :=
   Module[{erg},
    erg = Simplify[xx]; erg];
-(*Der le Befehl für aussagenlogische Formeln reduziert sich auf den \
-Mathematica Befehl Simplify.*)
+(*The le command for propositional logic formulas reduces to the \
+Mathematica Simplify command.*)
 
-(*Zu Simplify und BooleanMinimize: Es ist zu beachten, dass Simplify \
-besser zur Vereinfachung von quantorenlogischen Formeln geeignet ist,
-während BooleanMinimze der bessere Befehl ist, um nach \
-aussagenlogischen Kriterien optimierte DNF zu erhalten. 
-Zu Simplify und FullSimplify: Für logische Vereinfachungen reicht es, \
-sich auf Simplify zu beschränken.*)
+(*Regarding Simplify and BooleanMinimize: It should be noted that Simplify \
+is better suited for simplifying quantifier logic formulas,
+while BooleanMinimize is the better command for obtaining \
+DNF optimized according to propositional logic criteria. 
+Regarding Simplify and FullSimplify: For logical simplifications, it is sufficient \
+to restrict oneself to Simplify.*)
 
 
-(*STANDARDIZATION (besser wäre "optimizer")*)
-(*Dieses Modul standardisiert und optimiert im Rahmen des Algorithmus \
-logische Ausdrücke. Hierbei kann vorausgesetzt werden, dass die \
-Laufvariablen in explodierter Form vorliegen, die allquantifizierten \
-Variablen x-Variable sind und die existenzquantifizerten Variablen \
-y-Variablen sind sowie die Ausdrücke in expandierter Form vorliegen.
-Dies wird am Anfang von decide sicher gestellt und bleibt während der \
-Iteration erhalten.
-Die Standardisierung sieht folgende Schritte vor:
-  1. Umformung in optimierte DNFFOL mittels. Dies impliziert mit \
-Simplify Identifikation expliziter Widersprüche als "False". 
-2. Identifikation expliziter sat-Ausdrücke mittels satDisjunktion. \
-Dies führt u.U. zu weiteren Vereinfachungen.
+(*STANDARDIZATION (better would be "optimizer")*)
+(*This module standardizes and optimizes logical \
+expressions within the framework of the algorithm. It can be assumed that the \
+running variables are in exploded form, the universally quantified \
+variables are x-variables and the existentially quantified variables \
+are y-variables, and the expressions are in expanded form.
+This is ensured at the beginning of decide and remains preserved \
+during iteration.
+The standardization involves the following steps:
+  1. Transformation into optimized DNFFOL using. This implies identification of explicit contradictions as "False" with \
+Simplify. 
+2. Identification of explicit sat-expressions using satDisjunktion. \
+This may lead to further simplifications.
 
-Die Optimierungen in 1. werden durch sukzessive Umformungen von \
-invexer Form in pränexe Formen, wobei jeweils getestet wird, ob die \
-Anwendungsbedingungen von Simplify sowie ip3and und ip2or erfüllt \
-sind, um maximal nach diesen Gesetzen vereinfachen zu können. Am Ende \
-wird dann in eine disjunktive Normalform umgeformt, in denen die \
-Wirkungsbereiche der Quantoren maximal minimiert ist.*)
+The optimizations in 1. are achieved through successive transformations from \
+invex form to prenex forms, whereby it is tested each time whether the \
+application conditions of Simplify as well as ip3and and ip2or are fulfilled \
+in order to simplify maximally according to these laws. At the end, \
+it is then transformed into a disjunctive normal form in which the \
+scopes of the quantifiers are minimally minimized.*)
 
 
 (*invpn5b*)
@@ -694,8 +683,8 @@ invpn5b[expression_] :=
         ein[{yy1}, innen1 && konj2] && oo]] &, expr];
    If[expr =!= standard, Return[wf[lve[expr]]]];
    expression];
-(*invpn5b zieht Existenzquantoren in Konjunkten nur vor, wenn das \
-andere Konjunkt keinen Quantor als Kopf hat. *)
+(*invpn5b pulls existential quantifiers forward in conjuncts only when the \
+other conjunct does not have a quantifier as its head. *)
 
 (*invpn3b*)
 invpn3b[expression_] :=
@@ -710,8 +699,8 @@ invpn3b[expression_] :=
         alle[{xx1}, innen1 || disj2] || oo]] &, expr];
    If[expr =!= standard, Return[wf[lve[expr]]]];
    expression];
-(*invpn3b zieht Allquantoren in Disjunkten nur vor, wenn das andere \
-Disjunkt keinen Quantor als Kopf hat.*)
+(*invpn3b pulls universal quantifiers forward in disjuncts only when the other \
+disjunct does not have a quantifier as its head.*)
 
 (*invpn1b*)
 invpn1b[expression_] :=
@@ -726,8 +715,8 @@ invpn1b[expression_] :=
         alle[{xx1}, innen1 && konj2] && oo]] &, expr];
    If[expr =!= standard, Return[wf[lve[expr]]]];
    expression];
-(*invpn1b zieht Allquantoren in Konjunkten nur vor, wenn das andere \
-Konjunkt keinen Quantor als Kopf hat.*)
+(*invpn1b pulls universal quantifiers forward in conjuncts only when the other \
+conjunct does not have a quantifier as its head.*)
 
 (*invpn7b*)
 invpn7b[expression_] :=
@@ -742,8 +731,8 @@ invpn7b[expression_] :=
         ein[{yy1}, innen1 || disj2] || oo]] &, expr];
    If[expr =!= standard, Return[wf[lve[expr]]]];
    expression];
-(*invpn7b zieht Existenzquantoren in Disjunkten nur vor, wenn das \
-andere Disjunkt keinen Quantor als Kopf hat.*)
+(*invpn7b pulls existential quantifiers forward in disjuncts only when the \
+other disjunct does not have a quantifier as its head.*)
 
 (*invPN9*)
 invpn9[expression_] :=
@@ -757,8 +746,8 @@ invpn9[expression_] :=
         alle[{xx1}, innen1 && (innen2 /. xx2 -> xx1)] && oo]] &, expr];
    If[expr =!= standard, Return[wf[lve[expr]]]];
    expression];
-(*invPN9 kehrt PN9 um. Es wird verwendet um pränexe Normalformen zu \
-bilden, in denen allquantifizierte Variable möglichst identisch sind.*)
+(*invPN9 reverses PN9. It is used to form \
+prenex normal forms in which universally quantified variables are as identical as possible.*)
 
 (*invPN10*)
 invpn10[expression_] :=
@@ -772,9 +761,8 @@ invpn10[expression_] :=
         ein[{xx1}, innen1 || (innen2 /. xx2 -> xx1)] || oo]] &, expr];
    If[expr =!= standard, Return[wf[lve[expr]]]];
    expression];
-(*invPN10 kehrt PN10 um. Es wird verwendet um pränexe Normalformen zu \
-bilden, in denen existenzquantifizierte Variable möglichst identisch \
-sind.*)
+(*invPN10 reverses PN10. It is used to form prenex normal forms in \
+which existentially quantified variables are as identical as possible.*)
 
 (*invPN5*)
 invpn5[expression_] :=
@@ -787,7 +775,7 @@ invpn5[expression_] :=
         ein[{yy1}, innen1 && konj2] && oo]] &, expr];
    If[expr =!= standard, Return[wf[lve[expr]]]];
    expression];
-(*invPN5 kehrt PN5 um.*)
+(*invPN5 reverses PN5.*)
 
 (*invPN3*)
 invpn3[expression_] :=
@@ -800,19 +788,19 @@ invpn3[expression_] :=
         alle[{xx1}, innen1 || disj2] || oo]] &, expr];
    If[expr =!= standard, Return[wf[lve[expr]]]];
    expression];
-(*invPN3 kehrt PN3 um.*)
+(*invPN3 reverses PN3.*)
 
 ainvpn[expression_] :=
   Module[{expr1, expr2},
    expr2 = wf[simple[expression]];
    expr2 = maxIndizierung[expr2];
-   (*Die folgenden invertierten pn-
-   Befehle setzen maxIndizierung voraus, da sonst nicht-
-   wohlgeformte Formeln entstehen. 
-   Es muss an dieser Stelle ergs neu definiert werden, 
-   damit FixedPoint nicht in eine Schleife gerät, 
-   in der in simple minIndizierung angewendet wird und in den \
-invertierten pn-Gesetzen maxIndizierung.*)
+   (*The following inverted pn-
+   commands require maxIndizierung, otherwise non-
+   well-formed formulas arise. 
+   ergs must be redefined at this point, 
+   so that FixedPoint does not get into a loop 
+   in which minIndizierung is applied in simple and maxIndizierung in the \
+inverted pn-laws.*)
    expr1 = invpn5b[expr2];
    If[expr1 =!= expr2, ZPrint["invpn5b applied: ", tradi[expr1]][4]; 
     Return[expr1]];
@@ -838,15 +826,15 @@ invertierten pn-Gesetzen maxIndizierung.*)
    If[expr1 =!= expr2, ZPrint["invpn3 applied: ", tradi[expr1]][4]; 
     Return[expr1]];
    expr1]; 
-(*ainvpn formt sukzessive in pränexe Normalformen um, und erhöht \
-damit Schritt für Schritt die Anwendungsmöglickeiten von simple. Die \
-Reihenfolge der Befehle darf nicht verändert werden.*)
+(*ainvpn successively transforms into prenex normal forms and thereby \
+step by step increases the application possibilities of simple. The \
+order of the commands must not be changed.*)
 
 standardization[expression_] :=
   Module[{expr},
-   (*T.L. Bin nicht sicher, 
-   ob hier nicht doch le vorgeschaltet werden muss. 
-   Vielleicht auch nur einmal in decide.*)
+   (*T.L. Not sure 
+   whether le must not be prepended here after all. 
+   Perhaps also only once in decide.*)
    expr = simple[expression];
    expr = pn[expr];
    ZPrint["invex form: ", tradi[expr]][4];
@@ -855,15 +843,15 @@ standardization[expression_] :=
    expr = le[expr];
    expr = maxIndizierung[expr];
    expr = satDisjunktion[expr];
-   expr]; 
+   expr];
 
 (*qe *)
-(*"qe" steht für "quantifier-elimination. Der Behlehl qe bildet das \
-Herz des Algorithmus - durch ihn werden Allquantoren eliminiert.*)
+(*"qe" stands for "quantifier-elimination. The command qe forms the \
+heart of the algorithm - through it, universal quantifiers are eliminated.*)
 
-(*T.L.8: AB HIER NUR NOCH UNVOLLSTÄNDIGE ERKLÄRUNGEN.*)
+(*T.L.8: FROM HERE ONLY INCOMPLETE EXPLANATIONS.*)
 
-(*A. HILFSBEFEHLE FÜR qe*)
+(*A. HELPER COMMANDS FOR qe*)
 
 aekombis[list1_, list2_] := 
   Module[{ergstart, erg, lae1, lae2, lae, startpos, akt, aktneu, 
@@ -897,11 +885,11 @@ aekombis[list1_, list2_] :=
      ind = 0; aktneu = aktneu //. xd :> list1[[++ind]];
      erg = Append[erg, aktneu], {ii, 1, Length[neupos]}]];
    erg];
-(*"aekombis" bildet Kombinationation aus zwei Listen. In pnrSInnen \
-dient der Befehl dazu, alle Quantorenketten gebildet, in denen \
-Existenzquantoren möglichst vor Allquantoren stehen, wobei jedoch die \
-relative Reihenfolge all- und existenzquantifizierter Variablen der \
-jeweiligen Listen erhalten bleiben muss. *)
+(*"aekombis" forms combinations from two lists. In pnrSInnen \
+the command is used to form all quantifier chains in which \
+existential quantifiers are placed before universal quantifiers as much as possible, but the \
+relative order of universally and existentially quantified variables of the \
+respective lists must be preserved. *)
 step13a[ausdruck_, zuEliminieren_] :=
   Module[{erg, lae},
    erg = ausdruck;
@@ -915,43 +903,42 @@ step13a[ausdruck_, zuEliminieren_] :=
         RuleDelayed[alle[{zuEliminieren[[jj]]}, rest2_], rest2]] &, 
       erg], {jj, 1, lae}];
    erg];
-(* Die Funktion step13a eliminiert in pnrSInnen die Quantoren der \
-jeweiligen Liste NEJAMNEJEKOMBI aus dem ursprünglichen Ausdruck, \
-damit dann in step13b die Quantorenkette NEJAMNEJEKOMBI vor den \
-Junktor im ursprünglichen Ausdruck plaziert werden kann.*)
+(* The function step13a eliminates in pnrSInnen the quantifiers of the \
+respective list NEJAMNEJEKOMBI from the original expression, \
+so that then in step13b the quantifier chain NEJAMNEJEKOMBI can be \
+placed before the junctor in the original expression.*)
 ersterBuchstabe[lv_] := First[Take[FixedPointList[Head, lv], -3]];
-(* Der erste Buchstabe einer indizierten Varablen läßt sich nicht \
-trivial mit Head finden, z.B. ist Head[x[1][2][3]] gleich x[1][2].
-Man muß die FixedPont-Liste der Köpfe von Köpfen nehmen, die stets \
-mit {..., erster Buchstabe der Laufvariable, Symbol, Symbol} endet,
-d.h. die drittletzte Position ist der gesuchte erste Buchstabe.
-"-3" erklärt sich daraus, dass genaugenommen geprüft wird, ob der \
-drittletzte Kopf "x" ist, der vorletzte und letzte sind gemäß 
-Mathematica "symbol". Die Vereinigung aller drittletzten Heads muss x \
-ergeben. Dieser Befehl ist so kompliziert, da die x-Variablen \
-beliebig indiziert sein können. *)
+(* The first letter of an indexed variable cannot be found \
+trivially with Head, e.g. Head[x[1][2][3]] equals x[1][2].
+One must take the FixedPoint list of the heads of heads, which always \
+ends with {..., first letter of running variable, Symbol, Symbol},
+i.e. the third-to-last position is the desired first letter.
+"-3" is explained by the fact that more precisely it is checked whether the \
+third-to-last head is "x", the second-to-last and last are according to 
+Mathematica "symbol". The union of all third-to-last Heads must yield x. \
+This command is so complicated because the x-variables \
+can be indexed arbitrarily. *)
 quantorisierung[{lv_ } /; (lv === x) || (ersterBuchstabe[lv] === x), 
    ausdruck_] := alle[{lv}, ausdruck];
 quantorisierung[{lv_} /; (lv === y) || (ersterBuchstabe[lv] === y), 
    ausdruck_] := ein[{lv}, ausdruck];
 step13b[qlist_ /; (Length[qlist] > 0), ausdruck_] := 
   Fold[quantorisierung[{#2}, #1] &, ausdruck, Reverse[qlist]];
-(* step13b nimmt in pnrSInnen die jeweiligen NEJAMNEJEKOMBIs als \
-Argument qlist und stellt sie jeweils dem Ausdruck schritt13a voran, \
-d.i. step13ausdruck (= der Teilausdruck, dessen Kopf der selektierte \
-Junktor ist) ohne die Quantoren der jeweiligen NEJEJAMNEJEKOMBIs.*)
+(* step13b takes in pnrSInnen the respective NEJAMNEJEKOMBIs as \
+argument qlist and prepends them to the expression schritt13a, \
+i.e. step13ausdruck (= the partial expression whose head is the selected \
+junctor) without the quantifiers of the respective NEJEJAMNEJEKOMBIs.*)
 
 xListeQ[{xe__}] := Union[Map[ersterBuchstabe[#] &, {xe}]] === {x};
-(* "xListeQ" fragt, ob jedes Element einer Liste mit der Variablen x \
-anfängt. *)
+(* "xListeQ" asks whether each element of a list starts with the variable x. *)
 yListeQ[{ys__}] := Union[Map[ersterBuchstabe[#] &, {ys}]] === {y};
-(*Analgo zu xListeQ.*)
+(*Analogous to xListeQ.*)
 pnrwfQ[{ausdruck_, {}, {}}] := True;
 pnrwfQ[{ausdruck_, {xe__}, {ys__}}] :=
   xListeQ[{xe}] && yListeQ[{ys}];
-(*pnrwfQ fragt, ob eine Liste bestehend aus ausdruck und zwei Listen, \
-eine x- und y-Liste enthält. pnrwfQ gibt auch "True" aus, wenn die \
-beiden Listen leer sind.*)
+(*pnrwfQ asks whether a list consists of an expression and two lists, \
+one x-list and one y-list. pnrwfQ also outputs "True" if the \
+two lists are empty.*)
 allquantorvermehrer[alle[{li_}, innen_], wieoft_] := 
   Apply[And, 
    Table[alle[{li[ii]}, (innen /. li -> li[ii])], {ii, 1, wieoft}]];
@@ -970,8 +957,8 @@ xidpairs[{lit1_ , Not[lit2_]}] :=
      Length[lit1]}];
    ZPrint["x-idpairs within one K-pair: ", erg][5];
    erg];
-(*xidpairs gibt Paare von x-Variablen aus, die an identischen \
-Argumentstellen eines K-paares vorkommen.*)
+(*xidpairs outputs pairs of x-variables that occur at identical \
+argument positions of a K-pair.*)
 xpairs[xidpairs_] :=
   Module[{xvar, xclass, akt1, erg, xflat, newxclass},
    xvar = DeleteDuplicates[Cases[xidpairs, x[_], {0, Infinity}]];
@@ -995,10 +982,9 @@ xpairs[xidpairs_] :=
    erg = DeleteDuplicates[Flatten[erg, 1]]; 
    ZPrint["flatted list of all x-pairs without duplicates: ", erg][5];
    erg];
-(*xpairs bestimmt aus xidpairs alle x-Paare (also auch die, die auf \
-"Transitivität" beruhen). Dies wird durch die Bildung jeweils aller \
-subsets zu jeder Liste von Paaren, denen eine x-Variable gemeinsam \
-ist, erreicht.)*)
+(*xpairs determines from xidpairs all x-pairs (including those based on \
+"transitivity"). This is achieved by forming all \
+subsets for each list of pairs that have an x-variable in common.)*)
  yklist[{poslit_, Not[neglit_]}, sxlist_, expression_] :=
   Module[{erg, akt1, akt2},
    erg = {};
@@ -1011,10 +997,10 @@ ist, erreicht.)*)
      1, Length[poslit]}];
    erg = DeleteDuplicates[erg];
    erg]; 
-(*yklist gibt für ein gegebenes K-pair, eine selected xListe und \
-einen Ausdruck (nämlich dem, dem der zu eliminierende Allquantor \
-voransteht) die Liste an y-Variablen aus, die an identischen \
-Argumentstelle mit Variablen der selected x-Liste vorkommen.*)
+(*yklist outputs for a given K-pair, a selected xList, and \
+an expression (namely the one preceded by the universal quantifier \
+to be eliminated) the list of y-variables that occur at identical \
+argument positions with variables of the selected x-list.*)
 ylist[kpairlist_, sxlist_, expression_] :=
   Module[{akt, erg, ylist},
    erg = {};
@@ -1023,10 +1009,10 @@ ylist[kpairlist_, sxlist_, expression_] :=
    erg = Union[Flatten[erg]];
    ZPrint["y-list identified by k-pairs: ", erg][4];
    erg];
-(*ylist gibt für eine gegebene Liste von K-Paaren, eine gegebene \
-Liste von x-Paaren und einen Ausdruck (nämlich dem, dem der zu \
-eliminierende Allquantor voransteht) eine y-Liste aus. Es verwendet \
-dabei das Modul yklist.*)
+(*ylist outputs for a given list of K-pairs, a given \
+list of x-pairs, and an expression (namely the one preceded by the universal quantifier \
+to be eliminated) a y-list. It uses \
+the yklist module.*)
 ynotinscope[expression_] := 
   Flatten[Cases[
     expression, {y[no_]} /; 
@@ -1281,8 +1267,8 @@ Existenzquantor genommen.*)
    If[step11k == 0, erg = {oo[out[1]], q2output[[2]], q2output[[3]]}, 
     erg = Table[{oo[out[ii]], q2output[[2]], q2output[[3]]}, {ii, 1, 
        step11k}]];
-   (*"oo" kennzeichnet hier die outputs, um in der der Def. 
-   von lle die Länge der outputs bestimmen zu können.*)
+   (*"oo" marks the outputs here in order to determine \
+the length of the outputs in the definition of lle.*)
    erg = 
     MapAll[ReplaceAll[#, 
        RuleDelayed[alle[{lv_}, innen_], 
@@ -1456,7 +1442,7 @@ emSimplifyingCore[
 emSimplifying[expression_] := 
   FixedPoint[emSimplifyingCore, expression];
 
-(*A. HILFSBEFEHLE FÜR em*)
+(*A. HELPER COMMANDS FOR em*)
    KS = Compile[{{n, _Integer}, {k, _Integer}}, 
    Module[{h, ss = Range[k], x}, Table[(h = Length[ss]; x = n;
       While[x === ss[[h]], h--; x--];
@@ -1604,8 +1590,8 @@ emExpressionQ[ausdruck_] :=
      innen_ /; 
       Not[FreeQ[innen, 
         ein[{lv2_}, innen2_ /; (Head[innen2] === And)]]]]]];
-(*"emExpressionQ" prüft, ob die Anwendungsbedingungen für em \
-vorliegen.*)
+(*"emExpressionQ" checks whether the application conditions for em \
+are present.*)
 
 konjunktverdopplungS[disjunkte_ /; Head[disjunkte] =!= Or] :=
   Module[{se, que, ee, disneu },
@@ -1666,15 +1652,15 @@ applied to the second conjunct."][2.5];
 terminierung[ausdruck_] := 
   Module[{kvargumente, klae, termstep3, termstep4, termstep5, 
     termstep8, erg}, erg = ausdruck;
-   (*Im Folgenden bedienen wir uns eines Tricks und ersetzen alle \
-innersten Teilausdrücke,die nicht sat oder False sind durch "nonsat". 
-   Dieser Trick ist nötig,
-   um Simplify und satDisjunktion auch auf komplexe Ausdrücke mit \
-über 100 Teilausdrücken anwenden zu können.Dieser Tricke ist zulässig,
-   da wir den Gesamtausdruck nur in Abhängigkeit zu "sat" und "False" \
-Teilausdrücken asl sat oder False identifizieren wollen.Falls \
-"ausdruck" nicht als False oder sat identifziert werden kann,
-   wird mit "ausdruck" weiter gerechnet.*)
+   (*In the following, we use a trick and replace all \
+innermost partial expressions that are not sat or False with "nonsat". 
+   This trick is necessary
+   to be able to apply Simplify and satDisjunktion to complex expressions with \
+over 100 partial expressions. This trick is permissible
+   because we only want to identify the overall expression as sat or False depending on "sat" and "False" \
+partial expressions. If \
+"ausdruck" cannot be identified as False or sat,
+   we continue calculating with "ausdruck".*)
    kvargumente = 
     DeleteDuplicates[
      Cases[erg, {teilausdruck_} /; (teilausdruck =!= 
@@ -1701,17 +1687,16 @@ Teilausdrücken asl sat oder False identifizieren wollen.Falls \
     MapAll[ReplaceAll[#, 
        RuleDelayed[{etw_} /; (Not[xListeQ[{etw}]] && 
            Not[yListeQ[{etw}]]), (etw)]] &, termstep4];
-   (*Der Zusatz \
-"(Not[xListeQ[{etw1,etw2}]]&&Not[yListeQ[{etw1,etw2}]])" verhindert,
-   dass die Kommata in Variablenlisten durch "\[And]" bzw.die \
-geschweiften Klammern um die Variablen durch runde Klammern ersetzt \
-werden.*)ZPrint["Expression to be evaluated as False or sat : ", 
+   (*The addition \
+"(Not[xListeQ[{etw1,etw2}]]&&Not[yListeQ[{etw1,etw2}]])" prevents
+   the commas in variable lists from being replaced by "\[And]" and the \
+curly brackets around the variables by round brackets.*)ZPrint["Expression to be evaluated as False or sat : ", 
      tradi[termstep4]][3];
    termstep5 = Simplify[termstep4];
-   (*Es muss hier Simplify verwendet werden,
-   da nur Simplify quantorenlogische Formel evaluiert.Simplify[
+   (*Simplify must be used here,
+   as only Simplify evaluates quantifier logic formulas.Simplify[
    ein[{y},f[y]\[And]\[Not]f[y]]]=False,
-   gleiches gilt nicht für BooleanMinimize.*)
+   the same does not apply to BooleanMinimize.*)
    If[termstep5 === False, 
     ZPrint["False evaluation by Simplify succeeded: ", 
       tradi[termstep5]][2]; Return[False], 
@@ -1725,14 +1710,13 @@ werden.*)ZPrint["Expression to be evaluated as False or sat : ",
       termstep8]*)][3]];
    ZPrint["The following expression must be further evaluated: ", 
      erg][2]; erg]; 
-(*"terminierung" prüft ob die logische Umformung des gesamten \
-abgeleiteten Ausdruckes gemäß Simplify als False oder gemäß \
-satDisjunktion als sat identifiziert werden dann. Ist dies der Fall, \
-wird, "False" bzw. "sat" zurückgegeben. Dies bewirkt, dass in \
-"decideiterativerTeil" keine weitere Iteration eingeleitet und das \
-Programm terminiert. Ansonsten wird eine weitere Iteration \
-eingeleitet, wobei
-wieder auf den input von terminierung zurückgegangen wird.*) 
+(*"terminierung" checks whether the logical transformation of the entire \
+derived expression is identified as False according to Simplify or as \
+sat according to satDisjunktion. If this is the case, \
+"False" or "sat" is returned respectively. This causes in \
+"decideiterativerTeil" no further iteration to be initiated and the \
+program terminates. Otherwise, another iteration is \
+initiated, returning to the input of terminierung.*)
 
 decideIterativerTeil[ausdruck__] := 
   Module[{kvargumente, klae, nachkv, kj, erg}, erg = ausdruck;
@@ -1762,7 +1746,7 @@ decideIterativerTeil[ausdruck__] :=
 
 eingabepruefung[ausdruck_] :=
   Module[{erg, vara, varwf},
-   (* eingabepruefung prüft nicht,ob eine Variable gebunden ist!*)
+   (* eingabepruefung does not check whether a variable is bound!*)
    erg = ausdruck;
    vara = Length[Cases[ausdruck, {var_}, {0, Infinity}]];
    varwf = Length[Cases[wf[ausdruck], {var_}, {0, Infinity}]];
@@ -1795,19 +1779,18 @@ list?)"]];
    erg];
 
 
-(*EXPANSATION*)
-(* Dieses Modul wird einmalig nach der eingabepruefung angewendet, um 
-1. alle Junktoren bis auf And (&&,\[And])\[MediumSpace]\
+(*EXPANSION*)
+(* This module is applied once after input checking to 
+1. eliminate all junctors except And (&&,\[And])\[MediumSpace]\
 \[FilledVerySmallSquare]\[MediumSpace] Or (||,\[Or])\[MediumSpace]\
-\[FilledVerySmallSquare]\[MediumSpace] Not (!,¬) zu beseitigen,
-  2. negative Normalformeln (NNF) zu generieren. 
-Dies beides wird geleistet, indem LogicalExpand mittels "expansation" \
-maximal angewendet wird. Ausserdem müssen Negationen vor Quantoren \
-beseitigt werden, was Mathematica nicht im Rahmen von LogicalExpand \
-macht.
-Im weiteren Verauf des Algorithmus muss nicht mehr expandiert werden, \
-da an keiner Stelle neue Junktoren eingeführt oder Negatoren nach \
-aussen gebracht werden. *)
+\[FilledVerySmallSquare]\[MediumSpace] Not (!,Â¬),
+  2. generate negative normal formulas (NNF). 
+Both are accomplished by maximal application of LogicalExpand via "expansion". \
+Furthermore, negations before quantifiers must be eliminated, which Mathematica \
+does not do as part of LogicalExpand.
+In the further course of the algorithm, no more expansion is needed, \
+since new junctors are not introduced or negators moved \
+outward at any point. *)
 
 InnerhalbAlleexpand[expression_] :=
   Module[{erg},
@@ -1866,8 +1849,8 @@ decide[ausdruck_] :=
   Module[{erg, di},
    erg = eingabepruefung[ausdruck];  
    If[StringQ[erg], Return[erg]];
-   (* Diese Zeile ist nötig, damit nicht-
-   wohlgeformte Ausdrücke nicht evaluiert werden.*)
+   (* This line is necessary to prevent non-
+   well-formed expressions from being evaluated.*)
    erg = lve[erg];
    erg=maxIndizierung[erg];
  (* erg = variableconverting[erg]; *)
@@ -1881,14 +1864,13 @@ decide[ausdruck_] :=
 
 ZPrint[toprint__][level_] := 
   If[level <= printproofstepslevel, Print[toprint]];
-(* Es werden Printbefehle auf verschiedenen Ebenen definiert.
-Der user kann das level umstellen, dann muss mit "Remove" + \
-NeuEinlesen (=Shift+Enter in diesem Block) das neue level aktiviert \
-werden.
-Ausser diesem level sollte vom user nichts verändert werden.*)
+(* Print commands are defined at different levels.
+The user can change the level, then the new level must be activated with "Remove" + \
+reloading (=Shift+Enter in this block).
+Except for this level, nothing should be changed by the user.*)
 
 (*printproofstepslevel = 5;*)
-(*Diesen Befehl auskommentieren, wenn er im Rahmen der nb-Datei wirksam sein soll.*)
+(*Uncomment this command if it should take effect within the nb file.*)
 
 (*The following printproofstepslevels are available:
 1. prints input, start of a new iteration and output of decide.
@@ -1902,31 +1884,30 @@ steps concering the evalutation of each iteration result.
 5. Adds to 4 details of subordinated functions.*)
   
 
-(* Zur Zeit: Eingabe von logischen Ausdrücken in \
-Mathematica-Schreibweise nötig (= InputForm). Folgende Junktoren sind \
-erlaubt, aber nicht in der in Klammern zuletzt genannten \
-traditionellen Schreibweise:
+(* Currently: Input of logical expressions in \
+Mathematica notation required (= InputForm). The following junctors are \
+allowed, but not in the traditional notation mentioned last in parentheses:
 And (&&,\[And])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] \
 Or (||,\[Or])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Not \
-(!,¬)\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Nand (\
+(!,Â¬)\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Nand (\
 \[Nand])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Nor (\
 \[Nor])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Xor (\
 \[Xor])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] Implies (\
 \[Implies])\[MediumSpace]\[FilledVerySmallSquare]\[MediumSpace] \
 Equivalent (\[Equivalent])\[MediumSpace]\[FilledVerySmallSquare]\
 \[MediumSpace]
-Für die Quantoren sind "alle[{v-Liste}, scope]" und "ein[{v-Liste}, \
-scope]" zu verwenden. 
-Da das Programm sehr schnell sehr komplizierte Ausdrücke erzeugt, \
-empfiehlt es sich zunächst mit
-"standardization[expansion[[inputformel]]" eine Disjunktion von \
-Konjunktionen geschlossener Strukturen zu erzeugen und dann nur die \
-einzelnen Disjunkte zu prüfen. Ist ein Disjunkt sat, ist inputformel \
-sat. Sind alle Disjunkte False, ist inputformel False.*)
+For the quantifiers, use "alle[{v-list}, scope]" and "ein[{v-list}, \
+scope]". 
+Since the program very quickly generates very complicated expressions, \
+it is recommended to first use
+"standardization[expansion[[inputformula]]" to generate a disjunction of \
+conjunctions of closed structures and then only check the \
+individual disjuncts. If one disjunct is sat, then inputformula is \
+sat. If all disjuncts are False, then inputformula is False.*)
 
-(* Grundstein für Interaktivmodul - es gibt aber Probleme bei der \
-Eingabe, nur Mathematica-Ausdrücke sind erlaubt, esc nicht zu \
-verwenden.*)
+(* Foundation for interactive module - but there are problems with \
+input, only Mathematica expressions are allowed, esc should not be \
+used.*)
 (*expressiontoevalutate=Input["Determine a logical expression of pure \
 first-order logic?"];
 eingabepruefung[expressiontoevaluate];
